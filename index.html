@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline Suivi Commande - Version Personnalisée</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #1976D2;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .sheet-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1400px;
+        }
+
+        th {
+            background: #f1f3f4;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            color: #3c4043;
+            border-right: 1px solid #dadce0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 8px 6px;
+            border-right: 1px solid #dadce0;
+            border-bottom: 1px solid #dadce0;
+            font-size: 12px;
+            vertical-align: middle;
+        }
+
+        .row-header {
+            background: #f8f9fa !important;
+            font-weight: 600;
+            text-align: center;
+            color: #5f6368;
+            width: 40px;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+        }
+
+        .delete-col {
+            background: #fff5f5 !important;
+            width: 30px;
+            text-align: center;
+            position: sticky;
+            left: 40px;
+            z-index: 5;
+        }
+
+        .col-narrow { width: 80px; }
+        .col-medium { width: 100px; }
+        .col-wide { width: 120px; }
+        .col-contact { width: 140px; }
+        .col-amount { width: 100px; text-align: right; }
+
+        .status {
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background: transparent;
+        }
+
+        .status:hover {
+            transform: scale(1.05);
+        }
+
+        .status-non-validee { background: #fff3e0; color: #f57c00; }
+        .status-validee { background: #e3f2fd; color: #1976d2; }
+        .status-planifiee { background: #f3e5f5; color: #7b1fa2; }
+        .status-installee { background: #e8f5e8; color: #2e7d32; }
+        .status-annulee { background: #ffebee; color: #c62828; }
+
+        .priority-high { background: #ffebee; color: #c62828; }
+        .priority-medium { background: #fff8e1; color: #ef6c00; }
+        .priority-low { background: #f3e5f5; color: #8e24aa; }
+
+        .progress-bar {
+            width: 100px;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .editable {
+            border: 1px solid transparent;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: text;
+            min-width: 100px;
+            background: transparent;
+        }
+
+        .editable:hover {
+            background: #f5f5f5;
+            border-color: #ddd;
+        }
+
+        .editable:focus {
+            outline: none;
+            background: white;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        .alert {
+            color: #d32f2f;
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 2% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 95%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+        }
+
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .client-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        .client-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .client-item:last-child {
+            border-bottom: none;
+        }
+
+        .client-info {
+            flex: 1;
+        }
+
+        .client-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .client-details {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .client-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            border-bottom-color: #4CAF50;
+            color: #4CAF50;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .order-number-config {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .order-number-config h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .order-number-preview {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        .contractor-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+        }
+
+        .contractor-info {
+            flex: 1;
+        }
+
+        .contractor-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .contractor-type {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .amount-cell {
+            text-align: right;
+            font-weight: 600;
+            color: #2e7d32;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            
+            .filter-group {
+                justify-content: space-between;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .sheet-container {
+                padding: 15px;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+
+            .header-buttons {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Pipeline Suivi Commande → Installation</h1>
+            <div class="header-buttons">
+                <button class="btn btn-primary" onclick="addNewOrder()">
+                    ➕ Nouvelle Commande
+                </button>
+                <button class="btn btn-primary" onclick="addNewClient()">
+                    👤 Nouveau Client
+                </button>
+                <button class="btn btn-info" onclick="openClientManager()">
+                    👥 Gestion Clients
+                </button>
+                <button class="btn btn-secondary" onclick="saveData()" title="Sauvegarde manuelle">
+                    💾 Sauvegarder
+                </button>
+                <button class="btn btn-warning" onclick="openSettings()">
+                    ⚙️ Paramètres
+                </button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalOrders">4</div>
+                <div class="stat-label">Total Commandes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingOrders">3</div>
+                <div class="stat-label">En Cours</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="installedOrders">1</div>
+                <div class="stat-label">Installées</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalAmount">12 450€</div>
+                <div class="stat-label">CA Total HT</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalPPCMonthly">420€</div>
+                <div class="stat-label">PPC Mensuel Total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalPPCYearly">5 040€</div>
+                <div class="stat-label">PPC Annuel Projeté</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avgDelay">7j</div>
+                <div class="stat-label">Délai Moyen</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalClients">4</div>
+                <div class="stat-label">Clients</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="filter-group">
+                <label>Filtrer par statut:</label>
+                <select id="statusFilter" onchange="filterOrders()">
+                    <option value="">Tous</option>
+                    <option value="NON_VALIDEE">Non Validée</option>
+                    <option value="VALIDEE">Validée</option>
+                    <option value="PLANIFIEE">Installation Planifiée</option>
+                    <option value="INSTALLEE">Installée</option>
+                    <option value="ANNULEE">Annulée</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Filtrer par client:</label>
+                <select id="clientFilter" onchange="filterOrders()">
+                    <option value="">Tous les clients</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Filtrer par intervenant:</label>
+                <select id="contractorFilter" onchange="filterOrders()">
+                    <option value="">Tous les intervenants</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>Rechercher:</label>
+                <input type="text" id="searchInput" placeholder="Client, N° commande, produit..." oninput="filterOrders()">
+            </div>
+
+            <button class="btn btn-secondary" onclick="exportData()">
+                📊 Exporter CSV
+            </button>
+
+            <button class="btn btn-secondary" onclick="sendNotifications()">
+                📧 Notifier Clients
+            </button>
+
+            <button class="btn btn-info" onclick="importData()" title="Importer des données">
+                📥 Importer
+            </button>
+            
+            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleFileImport(event)">
+        </div>
+
+        <div class="sheet-container">
+            <div class="table-wrapper">
+                <table id="ordersTable">
+                    <thead>
+                        <tr>
+                            <th class="row-header">#</th>
+                            <th class="delete-col">🗑️</th>
+                            <th class="col-medium">N° Commande</th>
+                            <th class="col-medium">Client</th>
+                            <th class="col-contact">Contact</th>
+                            <th class="col-wide">Produit</th>
+                            <th class="col-amount">Montant HT</th>
+                            <th class="col-amount">PPC Mensuel</th>
+                            <th class="col-narrow">Statut</th>
+                            <th class="col-narrow">Priorité</th>
+                            <th class="col-narrow">Date Cmd</th>
+                            <th class="col-narrow">Livraison</th>
+                            <th class="col-narrow">Installation</th>
+                            <th class="col-wide">Intervenant</th>
+                            <th class="col-narrow">Progress</th>
+                            <th class="col-wide">Commentaires</th>
+                            <th class="col-narrow">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nouvelle Commande -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('orderModal')">&times;</span>
+            <h3>📋 Nouvelle Commande</h3>
+            <form id="orderForm">
+                <div class="order-number-config">
+                    <h4>Configuration du numéro de commande</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Préfixe</label>
+                            <input type="text" id="orderPrefix" value="CMD" placeholder="CMD, COMM, ORDER...">
+                        </div>
+                        <div class="form-group">
+                            <label>Année incluse</label>
+                            <select id="includeYear">
+                                <option value="true">Oui (CMD-2025-001)</option>
+                                <option value="false">Non (CMD-001)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="order-number-preview" id="orderNumberPreview">
+                        Aperçu: CMD-2025-005
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Client *</label>
+                        <select id="clientSelect" required>
+                            <option value="">Sélectionner un client</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Produit *</label>
+                        <input type="text" id="productName" required placeholder="Ex: Climatisation Daikin">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Montant HT (€) *</label>
+                        <input type="number" id="amountHT" required step="0.01" min="0" placeholder="2500.00">
+                    </div>
+                    <div class="form-group">
+                        <label>PPC Mensuel (€/mois)</label>
+                        <input type="number" id="ppcMonthly" step="0.01" min="0" placeholder="150.00">
+                        <small style="color: #666; font-size: 12px;">Facturation récurrente mensuelle</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Priorité</label>
+                        <select id="priority">
+                            <option value="NORMALE">Normale</option>
+                            <option value="HAUTE">Haute</option>
+                            <option value="BASSE">Basse</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Intervenant</label>
+                        <select id="contractorSelect">
+                            <option value="">Non assigné</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Type d'intervention</label>
+                        <select id="interventionType">
+                            <option value="INSTALLATION">Installation</option>
+                            <option value="MAINTENANCE">Maintenance</option>
+                            <option value="REPARATION">Réparation</option>
+                            <option value="DIAGNOSTIC">Diagnostic</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Date de Livraison Prévue</label>
+                        <input type="date" id="deliveryDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Date d'Installation Prévue</label>
+                        <input type="date" id="installationDate">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Commentaires</label>
+                    <textarea id="comments" rows="3" placeholder="Informations supplémentaires..."></textarea>
+                </div>
+
+                <div style="text-align: right; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('orderModal')" style="margin-right: 10px;">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer Commande</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Gestion Clients -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('clientModal')">&times;</span>
+            <h3>👥 Gestion des Clients</h3>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('clientList')">Liste des Clients</div>
+                <div class="tab" onclick="switchTab('addClient')">Ajouter Client</div>
+            </div>
+
+            <div id="clientList" class="tab-content active">
+                <div class="client-list" id="clientListContainer">
+                    <!-- Les clients seront ajoutés ici dynamiquement -->
+                </div>
+            </div>
+
+            <div id="addClient" class="tab-content">
+                <form id="clientForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nom *</label>
+                            <input type="text" id="clientName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Prénom</label>
+                            <input type="text" id="clientFirstName">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="clientEmail">
+                        </div>
+                        <div class="form-group">
+                            <label>Téléphone</label>
+                            <input type="tel" id="clientPhone">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Adresse</label>
+                        <textarea id="clientAddress" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="clientNotes" rows="2" placeholder="Informations supplémentaires sur le client..."></textarea>
+                    </div>
+
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button type="submit" class="btn btn-primary">Ajouter Client</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Paramètres -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('settingsModal')">&times;</span>
+            <h3>⚙️ Paramètres du Système</h3>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('contractorSettings')">Intervenants</div>
+                <div class="tab" onclick="switchTab('orderNumberSettings')">Numérotation</div>
+                <div class="tab" onclick="switchTab('generalSettings')">Général</div>
+            </div>
+
+            <div id="contractorSettings" class="tab-content active">
+                <h4>Gestion des Intervenants</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nom de l'intervenant</label>
+                        <input type="text" id="newContractorName" placeholder="Nom ou raison sociale">
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="newContractorType">
+                            <option value="INTERNE">Technicien interne</option>
+                            <option value="SOUS_TRAITANT">Société sous-traitante</option>
+                            <option value="PARTENAIRE">Partenaire</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Contact</label>
+                        <input type="text" id="newContractorContact" placeholder="Téléphone ou email">
+                    </div>
+                    <div class="form-group">
+                        <label>Spécialité</label>
+                        <input type="text" id="newContractorSpecialty" placeholder="Climatisation, Plomberie, Électricité...">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="addContractor()">Ajouter Intervenant</button>
+                
+                <div id="contractorList" style="margin-top: 20px;">
+                    <!-- Liste des intervenants -->
+                </div>
+            </div>
+
+            <div id="orderNumberSettings" class="tab-content">
+                <h4>Configuration de la Numérotation</h4>
+                <div class="form-group">
+                    <label>Préfixe par défaut</label>
+                    <input type="text" id="defaultPrefix" value="CMD" placeholder="CMD, COMM, ORDER...">
+                </div>
+                <div class="form-group">
+                    <label>Format par défaut</label>
+                    <select id="defaultFormat">
+                        <option value="with-year">Avec année (CMD-2025-001)</option>
+                        <option value="without-year">Sans année (CMD-001)</option>
+                        <option value="year-only">Année seulement (2025-001)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Numéro de départ</label>
+                    <input type="number" id="startingNumber" value="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Nombre de chiffres</label>
+                    <select id="numberPadding">
+                        <option value="2">2 chiffres (01)</option>
+                        <option value="3" selected>3 chiffres (001)</option>
+                        <option value="4">4 chiffres (0001)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="generalSettings" class="tab-content">
+                <h4>Paramètres Généraux</h4>
+                <div class="form-group">
+                    <label>Nom de l'entreprise</label>
+                    <input type="text" id="companyName" value="Votre Entreprise">
+                </div>
+                <div class="form-group">
+                    <label>Email de notification</label>
+                    <input type="email" id="notificationEmail" placeholder="admin@votre-entreprise.fr">
+                </div>
+                <div class="form-group">
+                    <label>Délai d'alerte (jours)</label>
+                    <input type="number" id="alertDelay" value="3" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Devise</label>
+                    <select id="currency">
+                        <option value="EUR">Euro (€)</option>
+                        <option value="USD">Dollar ($)</option>
+                    </select>
+                </div>
+                
+                <h4 style="margin-top: 30px;">Sauvegarde & Restauration</h4>
+                <div class="form-group">
+                    <label>Sauvegarde automatique</label>
+                    <select id="autoSave">
+                        <option value="true">Activée</option>
+                        <option value="false">Désactivée</option>
+                    </select>
+                    <small style="color: #666;">Sauvegarde automatique toutes les 30 secondes</small>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="button" class="btn btn-primary" onclick="saveData()">💾 Sauvegarder maintenant</button>
+                    <button type="button" class="btn btn-secondary" onclick="exportBackup()">📤 Exporter sauvegarde</button>
+                    <button type="button" class="btn btn-info" onclick="importData()">📥 Importer sauvegarde</button>
+                    <button type="button" class="btn btn-warning" onclick="resetData()">🔄 Réinitialiser données</button>
+                </div>
+                
+                <div id="saveStatus" style="margin-top: 15px; padding: 10px; border-radius: 4px; display: none;">
+                    <small>Dernière sauvegarde : <span id="lastSaveTime">Jamais</span></small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Base de données
+        let clients = [
+            {
+                id: 'CLI-001',
+                name: 'Dupont',
+                firstName: 'Martin',
+                email: 'martin.dupont@email.fr',
+                phone: '01 23 45 67 89',
+                address: '123 Rue de la Paix, 75001 Paris',
+                notes: 'Client fidèle'
+            },
+            {
+                id: 'CLI-002',
+                name: 'Bernard',
+                firstName: 'Sophie',
+                email: 'sophie.bernard@email.fr',
+                phone: '01 98 76 54 32',
+                address: '456 Avenue des Champs, 69000 Lyon',
+                notes: 'Préfère les rendez-vous le matin'
+            },
+            {
+                id: 'CLI-003',
+                name: 'Morel',
+                firstName: 'Jean',
+                email: 'jean.morel@email.fr',
+                phone: '01 11 22 33 44',
+                address: '789 Boulevard du Centre, 33000 Bordeaux',
+                notes: ''
+            },
+            {
+                id: 'CLI-004',
+                name: 'Dubois',
+                firstName: 'Claire',
+                email: 'claire.dubois@email.fr',
+                phone: '01 55 66 77 88',
+                address: '321 Rue Neuve, 31000 Toulouse',
+                notes: 'Nouvelle cliente'
+            }
+        ];
+
+        let contractors = [
+            {
+                id: 'CONT-001',
+                name: 'Pierre Leblanc',
+                type: 'INTERNE',
+                contact: '06 12 34 56 78',
+                specialty: 'Climatisation'
+            },
+            {
+                id: 'CONT-002',
+                name: 'Marc Technics',
+                type: 'INTERNE',
+                contact: '06 23 45 67 89',
+                specialty: 'Plomberie'
+            },
+            {
+                id: 'CONT-003',
+                name: 'SAS Julie Maintenance',
+                type: 'SOUS_TRAITANT',
+                contact: '01 23 45 67 89',
+                specialty: 'Maintenance générale'
+            },
+            {
+                id: 'CONT-004',
+                name: 'Entreprise Antoine R.',
+                type: 'SOUS_TRAITANT',
+                contact: '04 56 78 90 12',
+                specialty: 'Électricité'
+            }
+        ];
+
+        let orders = [
+            {
+                id: 'CMD-2025-001',
+                clientId: 'CLI-001',
+                product: 'Climatisation Daikin',
+                amountHT: 3500.00,
+                ppcMonthly: 120.00,
+                status: 'INSTALLEE',
+                priority: 'HAUTE',
+                orderDate: '2025-07-15',
+                deliveryDate: '2025-07-20',
+                installationDate: '2025-07-22',
+                contractorId: 'CONT-001',
+                interventionType: 'INSTALLATION',
+                comments: 'Installation réussie'
+            },
+            {
+                id: 'CMD-2025-002',
+                clientId: 'CLI-002',
+                product: 'Chaudière Viessmann',
+                amountHT: 4200.00,
+                ppcMonthly: 150.00,
+                status: 'PLANIFIEE',
+                priority: 'NORMALE',
+                orderDate: '2025-07-18',
+                deliveryDate: '2025-07-24',
+                installationDate: '2025-07-25',
+                contractorId: 'CONT-002',
+                interventionType: 'INSTALLATION',
+                comments: 'Installation prévue demain'
+            },
+            {
+                id: 'CMD-2025-003',
+                clientId: 'CLI-003',
+                product: 'Pompe à chaleur',
+                amountHT: 2800.00,
+                ppcMonthly: 80.00,
+                status: 'VALIDEE',
+                priority: 'BASSE',
+                orderDate: '2025-07-20',
+                deliveryDate: '2025-07-26',
+                installationDate: '2025-07-28',
+                contractorId: '',
+                interventionType: 'INSTALLATION',
+                comments: 'Commande en cours de traitement'
+            },
+            {
+                id: 'CMD-2025-004',
+                clientId: 'CLI-004',
+                product: 'VMC Double Flux',
+                amountHT: 1950.00,
+                ppcMonthly: 70.00,
+                status: 'NON_VALIDEE',
+                priority: 'NORMALE',
+                orderDate: '2025-07-23',
+                deliveryDate: '2025-07-29',
+                installationDate: '2025-07-30',
+                contractorId: '',
+                interventionType: 'INSTALLATION',
+                comments: 'En attente de validation'
+            }
+        ];
+
+        let filteredOrders = [...orders];
+
+        // Paramètres de numérotation
+        let orderNumberSettings = {
+            prefix: 'CMD',
+            includeYear: true,
+            startingNumber: 1,
+            padding: 3
+        };
+
+        // Configurations
+        const statuses = ['NON_VALIDEE', 'VALIDEE', 'PLANIFIEE', 'INSTALLEE', 'ANNULEE'];
+        const statusMap = {
+            'NON_VALIDEE': { text: 'NON VALIDÉE', class: 'status-non-validee', progress: 10 },
+            'VALIDEE': { text: 'VALIDÉE', class: 'status-validee', progress: 30 },
+            'PLANIFIEE': { text: 'INSTALLATION PLANIFIÉE', class: 'status-planifiee', progress: 70 },
+            'INSTALLEE': { text: 'INSTALLÉE', class: 'status-installee', progress: 100 },
+            'ANNULEE': { text: 'ANNULÉE', class: 'status-annulee', progress: 0 }
+        };
+
+        const priorityMap = {
+            'HAUTE': { text: 'HAUTE', class: 'priority-high' },
+            'NORMALE': { text: 'NORMALE', class: 'priority-medium' },
+            'BASSE': { text: 'BASSE', class: 'priority-low' }
+        };
+
+        const contractorTypeMap = {
+            'INTERNE': 'Technicien interne',
+            'SOUS_TRAITANT': 'Société sous-traitante',
+            'PARTENAIRE': 'Partenaire'
+        };
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData(); // Charger les données sauvegardées
+            renderOrders();
+            updateStats();
+            populateClientSelects();
+            populateContractorSelects();
+            renderClientList();
+            renderContractorList();
+            updateOrderNumberPreview();
+            startAutoSave(); // Démarrer la sauvegarde automatique
+            
+            // Event listeners pour la prévisualisation du numéro de commande
+            document.getElementById('orderPrefix').addEventListener('input', updateOrderNumberPreview);
+            document.getElementById('includeYear').addEventListener('change', updateOrderNumberPreview);
+        });
+
+        // Fonctions d'aide
+        function getClientById(clientId) {
+            return clients.find(c => c.id === clientId);
+        }
+
+        function getContractorById(contractorId) {
+            return contractors.find(c => c.id === contractorId);
+        }
+
+        function getClientFullName(client) {
+            return client ? `${client.firstName} ${client.name}` : 'Client introuvable';
+        }
+
+        function getContractorName(contractor) {
+            return contractor ? contractor.name : 'Non assigné';
+        }
+
+        function formatAmount(amount) {
+            return new Intl.NumberFormat('fr-FR', {
+                style: 'currency',
+                currency: 'EUR',
+                minimumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function generateOrderNumber() {
+            const year = new Date().getFullYear();
+            const existingNumbers = orders
+                .map(o => o.id)
+                .filter(id => id.startsWith(orderNumberSettings.prefix))
+                .map(id => {
+                    const parts = id.split('-');
+                    return parseInt(parts[parts.length - 1]);
+                })
+                .filter(num => !isNaN(num));
+            
+            const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : orderNumberSettings.startingNumber;
+            const paddedNumber = String(nextNumber).padStart(orderNumberSettings.padding, '0');
+            
+            if (orderNumberSettings.includeYear) {
+                return `${orderNumberSettings.prefix}-${year}-${paddedNumber}`;
+            } else {
+                return `${orderNumberSettings.prefix}-${paddedNumber}`;
+            }
+        }
+
+        function updateOrderNumberPreview() {
+            const prefix = document.getElementById('orderPrefix').value || 'CMD';
+            const includeYear = document.getElementById('includeYear').value === 'true';
+            const year = new Date().getFullYear();
+            const nextNumber = orders.length + 1;
+            const paddedNumber = String(nextNumber).padStart(3, '0');
+            
+            let preview;
+            if (includeYear) {
+                preview = `${prefix}-${year}-${paddedNumber}`;
+            } else {
+                preview = `${prefix}-${paddedNumber}`;
+            }
+            
+            document.getElementById('orderNumberPreview').textContent = `Aperçu: ${preview}`;
+        }
+
+        // Rendu des commandes
+        function renderOrders() {
+            const tbody = document.getElementById('ordersBody');
+            tbody.innerHTML = '';
+
+            filteredOrders.forEach((order, index) => {
+                const client = getClientById(order.clientId);
+                const contractor = getContractorById(order.contractorId);
+                const isLate = new Date(order.deliveryDate) < new Date() && order.status !== 'INSTALLEE' && order.status !== 'ANNULEE';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="row-header">${index + 1}</td>
+                    <td class="delete-col">
+                        <button class="btn btn-warning btn-small" onclick="deleteOrder('${order.id}')" title="Supprimer" style="padding: 2px 6px; font-size: 10px;">🗑️</button>
+                    </td>
+                    <td><strong style="font-size: 11px;">${order.id}</strong></td>
+                    <td style="font-size: 11px;">${getClientFullName(client)}</td>
+                    <td style="font-size: 10px;">
+                        ${client ? `📧 ${client.email.split('@')[0]}<br>📞 ${client.phone.substring(0, 10)}` : 'N/A'}
+                    </td>
+                    <td style="font-size: 11px;">${order.product}</td>
+                    <td class="amount-cell">${formatAmount(order.amountHT)}</td>
+                    <td class="amount-cell editable" contenteditable="true" onblur="updateField('${order.id}', 'ppcMonthly', parseFloat(this.textContent.replace(/[€\/mois\s]/g, '').replace(',', '.')) || 0)" style="cursor: text;" title="Facturation mensuelle récurrente">${formatAmount(order.ppcMonthly || 0)}/mois</td>
+                    <td>
+                        <select class="status ${statusMap[order.status].class}" onchange="updateStatus('${order.id}', this.value)" style="font-size: 9px; padding: 2px 4px;">
+                            ${statuses.map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${statusMap[s].text}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td><span class="status ${priorityMap[order.priority].class}" style="font-size: 9px; padding: 3px 6px;">${priorityMap[order.priority].text}</span></td>
+                    <td style="font-size: 10px;">${formatDate(order.orderDate)}</td>
+                    <td class="${isLate ? 'alert' : ''}" style="font-size: 10px;">${formatDate(order.deliveryDate)} ${isLate ? '🚨' : ''}</td>
+                    <td class="editable" contenteditable="true" onblur="updateField('${order.id}', 'installationDate', this.textContent)" style="font-size: 10px;">${formatDate(order.installationDate)}</td>
+                    <td>
+                        <select class="editable" onchange="updateField('${order.id}', 'contractorId', this.value)" style="font-size: 10px; padding: 2px;">
+                            <option value="">Non assigné</option>
+                            ${contractors.map(cont => `<option value="${cont.id}" ${cont.id === order.contractorId ? 'selected' : ''}>${cont.name}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <div class="progress-bar" style="width: 60px; height: 6px;">
+                            <div class="progress-fill" style="width: ${statusMap[order.status].progress}%"></div>
+                        </div>
+                        <small style="font-size: 9px;">${statusMap[order.status].progress}%</small>
+                    </td>
+                    <td class="editable" contenteditable="true" onblur="updateField('${order.id}', 'comments', this.textContent)" style="font-size: 10px;">${order.comments}</td>
+                    <td>
+                        <button class="btn btn-info btn-small" onclick="editOrder('${order.id}')" title="Modifier" style="padding: 2px 4px; font-size: 10px;">✏️</button>
+                        <button class="btn btn-secondary btn-small" onclick="duplicateOrder('${order.id}')" title="Dupliquer" style="padding: 2px 4px; font-size: 10px;">📋</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Mise à jour des statistiques
+        function updateStats() {
+            const total = orders.length;
+            const pending = orders.filter(o => o.status !== 'INSTALLEE' && o.status !== 'ANNULEE').length;
+            const installed = orders.filter(o => o.status === 'INSTALLEE').length;
+            const totalClients = clients.length;
+            const totalAmount = orders.reduce((sum, order) => sum + (order.amountHT || 0), 0);
+            
+            // Correction : somme de TOUTES les PPC mensuelles (tous statuts)
+            const totalPPCMonthly = orders.reduce((sum, order) => sum + (order.ppcMonthly || 0), 0);
+            const totalPPCYearly = totalPPCMonthly * 12;
+            
+            const completedOrders = orders.filter(o => o.status === 'INSTALLEE');
+            let avgDelay = 0;
+            if (completedOrders.length > 0) {
+                const totalDays = completedOrders.reduce((sum, order) => {
+                    const orderDate = new Date(order.orderDate);
+                    const installDate = new Date(order.installationDate);
+                    return sum + Math.ceil((installDate - orderDate) / (1000 * 60 * 60 * 24));
+                }, 0);
+                avgDelay = Math.round(totalDays / completedOrders.length);
+            }
+
+            document.getElementById('totalOrders').textContent = total;
+            document.getElementById('pendingOrders').textContent = pending;
+            document.getElementById('installedOrders').textContent = installed;
+            document.getElementById('totalAmount').textContent = formatAmount(totalAmount);
+            document.getElementById('totalPPCMonthly').textContent = formatAmount(totalPPCMonthly);
+            document.getElementById('totalPPCYearly').textContent = formatAmount(totalPPCYearly);
+            document.getElementById('avgDelay').textContent = avgDelay + 'j';
+            document.getElementById('totalClients').textContent = totalClients;
+        }
+
+        // Filtrage
+        function filterOrders() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const clientFilter = document.getElementById('clientFilter').value;
+            const contractorFilter = document.getElementById('contractorFilter').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredOrders = orders.filter(order => {
+                const client = getClientById(order.clientId);
+                const contractor = getContractorById(order.contractorId);
+                const clientName = getClientFullName(client).toLowerCase();
+                const contractorName = getContractorName(contractor).toLowerCase();
+                
+                const matchesStatus = !statusFilter || order.status === statusFilter;
+                const matchesClient = !clientFilter || order.clientId === clientFilter;
+                const matchesContractor = !contractorFilter || order.contractorId === contractorFilter;
+                const matchesSearch = !searchTerm || 
+                    clientName.includes(searchTerm) ||
+                    order.id.toLowerCase().includes(searchTerm) ||
+                    order.product.toLowerCase().includes(searchTerm) ||
+                    contractorName.includes(searchTerm);
+                
+                return matchesStatus && matchesClient && matchesContractor && matchesSearch;
+            });
+
+            renderOrders();
+        }
+
+        // Mise à jour du statut
+        function updateStatus(orderId, newStatus) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = newStatus;
+                renderOrders();
+                updateStats(); // Recalculer les statistiques car le statut affecte le calcul PPC
+                
+                const client = getClientById(order.clientId);
+                showNotification(`Statut mis à jour: ${getClientFullName(client)} - ${statusMap[newStatus].text}`);
+            }
+        }
+
+        // Mise à jour d'un champ
+        function updateField(orderId, field, value) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                if (field === 'installationDate') {
+                    order[field] = value.includes('/') ? convertDateFormat(value) : value;
+                } else if (field === 'ppcMonthly') {
+                    // Mise à jour du PPC mensuel avec recalcul des stats
+                    order[field] = parseFloat(value) || 0;
+                    updateStats(); // Recalculer les statistiques
+                } else {
+                    order[field] = value.trim ? value.trim() : value;
+                }
+                
+                const client = getClientById(order.clientId);
+                showNotification(`${field === 'ppcMonthly' ? 'PPC mensuel' : field} mis à jour pour ${getClientFullName(client)}`);
+                
+                // Rafraîchir l'affichage du tableau pour la PPC
+                if (field === 'ppcMonthly') {
+                    renderOrders();
+                }
+            }
+        }
+
+        // Fonctions principales
+        function addNewOrder() {
+            document.getElementById('orderModal').style.display = 'block';
+            updateOrderNumberPreview();
+        }
+
+        function addNewClient() {
+            document.getElementById('clientModal').style.display = 'block';
+            switchTab('addClient');
+        }
+
+        function openClientManager() {
+            document.getElementById('clientModal').style.display = 'block';
+            renderClientList();
+        }
+
+        function openSettings() {
+            document.getElementById('settingsModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            if (modalId === 'orderModal') {
+                document.getElementById('orderForm').reset();
+                updateOrderNumberPreview();
+            }
+            if (modalId === 'clientModal') {
+                document.getElementById('clientForm').reset();
+                switchTab('clientList');
+            }
+        }
+
+        // Gestion des onglets
+        function switchTab(tabName) {
+            const modal = event.target.closest('.modal');
+            const tabs = modal.querySelectorAll('.tab-content');
+            const tabButtons = modal.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            tabButtons.forEach(tab => tab.classList.remove('active'));
+            
+            modal.querySelector(`#${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Formulaires
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Mise à jour des paramètres de numérotation
+            orderNumberSettings.prefix = document.getElementById('orderPrefix').value || 'CMD';
+            orderNumberSettings.includeYear = document.getElementById('includeYear').value === 'true';
+            
+            const newOrder = {
+                id: generateOrderNumber(),
+                clientId: document.getElementById('clientSelect').value,
+                product: document.getElementById('productName').value,
+                amountHT: parseFloat(document.getElementById('amountHT').value) || 0,
+                ppcMonthly: parseFloat(document.getElementById('ppcMonthly').value) || 0,
+                status: 'NON_VALIDEE',
+                priority: document.getElementById('priority').value,
+                orderDate: new Date().toISOString().split('T')[0],
+                deliveryDate: document.getElementById('deliveryDate').value,
+                installationDate: document.getElementById('installationDate').value,
+                contractorId: document.getElementById('contractorSelect').value,
+                interventionType: document.getElementById('interventionType').value,
+                comments: document.getElementById('comments').value
+            };
+
+            orders.push(newOrder);
+            filteredOrders = [...orders];
+            renderOrders();
+            updateStats();
+            autoSaveIfNeeded(); // Sauvegarde automatique
+            closeModal('orderModal');
+            
+            const client = getClientById(newOrder.clientId);
+            showNotification(`Nouvelle commande créée: ${newOrder.id} - ${getClientFullName(client)}`);
+        });
+
+        document.getElementById('clientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newClient = {
+                id: 'CLI-' + String(clients.length + 1).padStart(3, '0'),
+                name: document.getElementById('clientName').value,
+                firstName: document.getElementById('clientFirstName').value,
+                email: document.getElementById('clientEmail').value,
+                phone: document.getElementById('clientPhone').value,
+                address: document.getElementById('clientAddress').value,
+                notes: document.getElementById('clientNotes').value
+            };
+
+            clients.push(newClient);
+            populateClientSelects();
+            renderClientList();
+            updateStats();
+            autoSaveIfNeeded(); // Sauvegarde automatique
+            document.getElementById('clientForm').reset();
+            
+            showNotification(`Nouveau client ajouté: ${getClientFullName(newClient)}`);
+        });
+
+        // Actions sur les commandes
+        function editOrder(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                document.getElementById('clientSelect').value = order.clientId;
+                document.getElementById('productName').value = order.product;
+                document.getElementById('amountHT').value = order.amountHT;
+                document.getElementById('ppcMonthly').value = order.ppcMonthly || 0;
+                document.getElementById('priority').value = order.priority;
+                document.getElementById('deliveryDate').value = order.deliveryDate;
+                document.getElementById('installationDate').value = order.installationDate;
+                document.getElementById('contractorSelect').value = order.contractorId;
+                document.getElementById('interventionType').value = order.interventionType;
+                document.getElementById('comments').value = order.comments;
+                
+                const form = document.getElementById('orderForm');
+                form.onsubmit = function(e) {
+                    e.preventDefault();
+                    
+                    order.clientId = document.getElementById('clientSelect').value;
+                    order.product = document.getElementById('productName').value;
+                    order.amountHT = parseFloat(document.getElementById('amountHT').value) || 0;
+                    order.ppcMonthly = parseFloat(document.getElementById('ppcMonthly').value) || 0;
+                    order.priority = document.getElementById('priority').value;
+                    order.deliveryDate = document.getElementById('deliveryDate').value;
+                    order.installationDate = document.getElementById('installationDate').value;
+                    order.contractorId = document.getElementById('contractorSelect').value;
+                    order.interventionType = document.getElementById('interventionType').value;
+                    order.comments = document.getElementById('comments').value;
+                    
+                    renderOrders();
+                    updateStats(); // Recalculer les statistiques après modification
+                    closeModal('orderModal');
+                    form.onsubmit = null;
+                    
+                    const client = getClientById(order.clientId);
+                    showNotification(`Commande modifiée: ${order.id} - ${getClientFullName(client)}`);
+                };
+                
+                document.getElementById('orderModal').style.display = 'block';
+            }
+        }
+
+        function duplicateOrder(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                const newOrder = {
+                    ...order,
+                    id: generateOrderNumber(),
+                    status: 'NON_VALIDEE',
+                    orderDate: new Date().toISOString().split('T')[0],
+                    comments: 'Duplicata de ' + order.id
+                };
+                
+                orders.push(newOrder);
+                filteredOrders = [...orders];
+                renderOrders();
+                updateStats(); // Recalculer les statistiques après duplication
+                showNotification(`Commande dupliquée: ${newOrder.id}`);
+            }
+        }
+
+        function deleteOrder(orderId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')) {
+                const orderIndex = orders.findIndex(o => o.id === orderId);
+                if (orderIndex !== -1) {
+                    const deletedOrder = orders[orderIndex];
+                    const client = getClientById(deletedOrder.clientId);
+                    
+                    orders.splice(orderIndex, 1);
+                    filteredOrders = [...orders];
+                    renderOrders();
+                    updateStats(); // Recalculer les statistiques après suppression
+                    
+                    showNotification(`Commande supprimée: ${deletedOrder.id} - ${getClientFullName(client)}`);
+                }
+            }
+        }
+
+        // Actions sur les clients
+        function editClient(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (client) {
+                document.getElementById('clientName').value = client.name;
+                document.getElementById('clientFirstName').value = client.firstName;
+                document.getElementById('clientEmail').value = client.email;
+                document.getElementById('clientPhone').value = client.phone;
+                document.getElementById('clientAddress').value = client.address;
+                document.getElementById('clientNotes').value = client.notes;
+                
+                switchTab('addClient');
+                
+                const form = document.getElementById('clientForm');
+                form.onsubmit = function(e) {
+                    e.preventDefault();
+                    
+                    client.name = document.getElementById('clientName').value;
+                    client.firstName = document.getElementById('clientFirstName').value;
+                    client.email = document.getElementById('clientEmail').value;
+                    client.phone = document.getElementById('clientPhone').value;
+                    client.address = document.getElementById('clientAddress').value;
+                    client.notes = document.getElementById('clientNotes').value;
+                    
+                    populateClientSelects();
+                    renderClientList();
+                    renderOrders();
+                    document.getElementById('clientForm').reset();
+                    switchTab('clientList');
+                    form.onsubmit = null;
+                    
+                    showNotification(`Client modifié: ${getClientFullName(client)}`);
+                };
+            }
+        }
+
+        function deleteClient(clientId) {
+            const hasOrders = orders.some(o => o.clientId === clientId);
+            
+            if (hasOrders) {
+                alert('Impossible de supprimer ce client car il a des commandes associées.');
+                return;
+            }
+            
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) {
+                clients = clients.filter(c => c.id !== clientId);
+                populateClientSelects();
+                renderClientList();
+                updateStats();
+                showNotification('Client supprimé');
+            }
+        }
+
+        // Gestion des intervenants
+        function addContractor() {
+            const name = document.getElementById('newContractorName').value.trim();
+            const type = document.getElementById('newContractorType').value;
+            const contact = document.getElementById('newContractorContact').value.trim();
+            const specialty = document.getElementById('newContractorSpecialty').value.trim();
+            
+            if (name) {
+                const newContractor = {
+                    id: 'CONT-' + String(contractors.length + 1).padStart(3, '0'),
+                    name: name,
+                    type: type,
+                    contact: contact,
+                    specialty: specialty
+                };
+                
+                contractors.push(newContractor);
+                document.getElementById('newContractorName').value = '';
+                document.getElementById('newContractorContact').value = '';
+                document.getElementById('newContractorSpecialty').value = '';
+                populateContractorSelects();
+                renderContractorList();
+                showNotification(`Intervenant ajouté: ${name}`);
+            }
+        }
+
+        function removeContractor(contractorId) {
+            const contractor = contractors.find(c => c.id === contractorId);
+            if (contractor && confirm(`Supprimer l'intervenant ${contractor.name} ?`)) {
+                contractors.splice(contractors.findIndex(c => c.id === contractorId), 1);
+                populateContractorSelects();
+                renderContractorList();
+                showNotification(`Intervenant supprimé: ${contractor.name}`);
+            }
+        }
+
+        // Listes déroulantes
+        function populateClientSelects() {
+            const clientSelect = document.getElementById('clientSelect');
+            const clientFilter = document.getElementById('clientFilter');
+            
+            [clientSelect, clientFilter].forEach(select => {
+                if (select === clientFilter) {
+                    select.innerHTML = '<option value="">Tous les clients</option>';
+                } else {
+                    select.innerHTML = '<option value="">Sélectionner un client</option>';
+                }
+                
+                clients.forEach(client => {
+                    const option = document.createElement('option');
+                    option.value = client.id;
+                    option.textContent = getClientFullName(client);
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        function populateContractorSelects() {
+            const contractorSelect = document.getElementById('contractorSelect');
+            const contractorFilter = document.getElementById('contractorFilter');
+            
+            [contractorSelect, contractorFilter].forEach(select => {
+                if (select === contractorFilter) {
+                    select.innerHTML = '<option value="">Tous les intervenants</option>';
+                } else {
+                    select.innerHTML = '<option value="">Non assigné</option>';
+                }
+                
+                contractors.forEach(contractor => {
+                    const option = document.createElement('option');
+                    option.value = contractor.id;
+                    option.textContent = contractor.name;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        function renderClientList() {
+            const container = document.getElementById('clientListContainer');
+            container.innerHTML = '';
+            
+            clients.forEach(client => {
+                const clientDiv = document.createElement('div');
+                clientDiv.className = 'client-item';
+                clientDiv.innerHTML = `
+                    <div class="client-info">
+                        <div class="client-name">${getClientFullName(client)}</div>
+                        <div class="client-details">
+                            📧 ${client.email || 'N/A'} • 📞 ${client.phone || 'N/A'}<br>
+                            📍 ${client.address || 'Adresse non renseignée'}
+                            ${client.notes ? `<br>📝 ${client.notes}` : ''}
+                        </div>
+                    </div>
+                    <div class="client-actions">
+                        <button class="btn btn-info btn-small" onclick="editClient('${client.id}')" title="Modifier">✏️</button>
+                        <button class="btn btn-warning btn-small" onclick="deleteClient('${client.id}')" title="Supprimer">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(clientDiv);
+            });
+        }
+
+        function renderContractorList() {
+            const container = document.getElementById('contractorList');
+            container.innerHTML = '';
+            
+            contractors.forEach(contractor => {
+                const contractorDiv = document.createElement('div');
+                contractorDiv.className = 'contractor-item';
+                contractorDiv.innerHTML = `
+                    <div class="contractor-info">
+                        <div class="contractor-name">${contractor.name}</div>
+                        <div class="contractor-type">
+                            ${contractorTypeMap[contractor.type]} - ${contractor.specialty}
+                            ${contractor.contact ? ` • ${contractor.contact}` : ''}
+                        </div>
+                    </div>
+                    <button class="btn btn-warning btn-small" onclick="removeContractor('${contractor.id}')">Supprimer</button>
+                `;
+                container.appendChild(contractorDiv);
+            });
+        }
+
+        // Export CSV
+        function exportData() {
+            const headers = ['N° Commande', 'Client', 'Email', 'Téléphone', 'Produit', 'Montant HT', 'PPC Mensuel', 'PPC Annuel', 'Statut', 'Priorité', 'Date Commande', 'Date Livraison', 'Date Installation', 'Intervenant', 'Type Intervention', 'Commentaires'];
+            const csvContent = [
+                headers.join(','),
+                ...orders.map(order => {
+                    const client = getClientById(order.clientId);
+                    const contractor = getContractorById(order.contractorId);
+                    const ppcYearly = (order.ppcMonthly || 0) * 12;
+                    return [
+                        order.id,
+                        `"${getClientFullName(client)}"`,
+                        `"${client?.email || ''}"`,
+                        `"${client?.phone || ''}"`,
+                        `"${order.product}"`,
+                        order.amountHT || 0,
+                        order.ppcMonthly || 0,
+                        ppcYearly.toFixed(2),
+                        statusMap[order.status].text,
+                        priorityMap[order.priority].text,
+                        order.orderDate,
+                        order.deliveryDate,
+                        order.installationDate,
+                        `"${getContractorName(contractor)}"`,
+                        order.interventionType || 'INSTALLATION',
+                        `"${order.comments}"`
+                    ].join(',');
+                })
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `commandes_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            showNotification('Export CSV téléchargé');
+        }
+
+        function sendNotifications() {
+            const pendingOrders = orders.filter(o => o.status !== 'INSTALLEE' && o.status !== 'ANNULEE');
+            showNotification(`${pendingOrders.length} notifications envoyées aux clients`);
+        }
+
+        // Utilitaires
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fr-FR');
+        }
+
+        function convertDateFormat(dateString) {
+            const parts = dateString.split('/');
+            if (parts.length === 3) {
+                return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+            return dateString;
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #4CAF50;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 2000;
+                font-weight: 500;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+                style.remove();
+            }, 3000);
+        }
+
+        // Fermer modals
+        window.onclick = function(event) {
+            const modals = ['orderModal', 'clientModal', 'settingsModal'];
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (event.target === modal) {
+                    closeModal(modalId);
+                }
+            });
+        }
+
+        // ============ SYSTÈME DE SAUVEGARDE ============
+        
+        let autoSaveInterval;
+        
+        // Sauvegarder les données
+        function saveData() {
+            try {
+                const dataToSave = {
+                    clients: clients,
+                    contractors: contractors,
+                    orders: orders,
+                    orderNumberSettings: orderNumberSettings,
+                    timestamp: new Date().toISOString(),
+                    version: "1.0"
+                };
+                
+                localStorage.setItem('pipelineData', JSON.stringify(dataToSave));
+                
+                // Mettre à jour l'affichage du statut de sauvegarde
+                const saveStatus = document.getElementById('saveStatus');
+                const lastSaveTime = document.getElementById('lastSaveTime');
+                if (saveStatus && lastSaveTime) {
+                    saveStatus.style.display = 'block';
+                    saveStatus.style.background = '#e8f5e8';
+                    saveStatus.style.color = '#2e7d32';
+                    lastSaveTime.textContent = new Date().toLocaleString('fr-FR');
+                }
+                
+                showNotification('💾 Données sauvegardées avec succès !');
+                return true;
+            } catch (error) {
+                console.error('Erreur lors de la sauvegarde:', error);
+                showNotification('❌ Erreur lors de la sauvegarde');
+                return false;
+            }
+        }
+        
+        // Charger les données
+        function loadData() {
+            try {
+                const savedData = localStorage.getItem('pipelineData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    
+                    // Restaurer les données
+                    if (data.clients) clients = data.clients;
+                    if (data.contractors) contractors = data.contractors;
+                    if (data.orders) orders = data.orders;
+                    if (data.orderNumberSettings) orderNumberSettings = data.orderNumberSettings;
+                    
+                    // Mettre à jour filteredOrders
+                    filteredOrders = [...orders];
+                    
+                    // Afficher l'info de dernière sauvegarde
+                    if (data.timestamp) {
+                        const saveStatus = document.getElementById('saveStatus');
+                        const lastSaveTime = document.getElementById('lastSaveTime');
+                        setTimeout(() => {
+                            if (saveStatus && lastSaveTime) {
+                                saveStatus.style.display = 'block';
+                                saveStatus.style.background = '#f0f0f0';
+                                saveStatus.style.color = '#666';
+                                lastSaveTime.textContent = new Date(data.timestamp).toLocaleString('fr-FR');
+                            }
+                        }, 1000);
+                    }
+                    
+                    showNotification('📥 Données chargées avec succès !');
+                    return true;
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement:', error);
+                showNotification('⚠️ Erreur lors du chargement des données');
+            }
+            return false;
+        }
+        
+        // Sauvegarde automatique
+        function startAutoSave() {
+            // Nettoyer l'ancien interval si il existe
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+            }
+            
+            // Sauvegarder toutes les 30 secondes
+            autoSaveInterval = setInterval(() => {
+                const autoSaveEnabled = document.getElementById('autoSave')?.value !== 'false';
+                if (autoSaveEnabled) {
+                    saveData();
+                }
+            }, 30000); // 30 secondes
+        }
+        
+        // Exporter sauvegarde
+        function exportBackup() {
+            try {
+                const dataToExport = {
+                    clients: clients,
+                    contractors: contractors,
+                    orders: orders,
+                    orderNumberSettings: orderNumberSettings,
+                    timestamp: new Date().toISOString(),
+                    version: "1.0"
+                };
+                
+                const dataStr = JSON.stringify(dataToExport, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `pipeline_backup_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                showNotification('📤 Sauvegarde exportée avec succès !');
+            } catch (error) {
+                console.error('Erreur lors de l\'export:', error);
+                showNotification('❌ Erreur lors de l\'export');
+            }
+        }
+        
+        // Importer sauvegarde
+        function importData() {
+            document.getElementById('importFile').click();
+        }
+        
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // Vérifier la structure des données
+                    if (importedData.clients && importedData.contractors && importedData.orders) {
+                        if (confirm('Êtes-vous sûr de vouloir importer ces données ? Cela remplacera toutes les données actuelles.')) {
+                            clients = importedData.clients;
+                            contractors = importedData.contractors;
+                            orders = importedData.orders;
+                            filteredOrders = [...orders];
+                            
+                            if (importedData.orderNumberSettings) {
+                                orderNumberSettings = importedData.orderNumberSettings;
+                            }
+                            
+                            // Rafraîchir l'interface
+                            renderOrders();
+                            updateStats();
+                            populateClientSelects();
+                            populateContractorSelects();
+                            renderClientList();
+                            renderContractorList();
+                            
+                            // Sauvegarder immédiatement
+                            saveData();
+                            
+                            showNotification('📥 Données importées avec succès !');
+                        }
+                    } else {
+                        throw new Error('Format de fichier invalide');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de l\'import:', error);
+                    showNotification('❌ Erreur lors de l\'import : fichier invalide');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Réinitialiser l'input file
+            event.target.value = '';
+        }
+        
+        // Réinitialiser les données
+        function resetData() {
+            if (confirm('⚠️ Êtes-vous ABSOLUMENT sûr de vouloir réinitialiser toutes les données ? Cette action est irréversible !')) {
+                if (confirm('🚨 DERNIÈRE CHANCE ! Toutes vos commandes, clients et intervenants seront supprimés. Continuez ?')) {
+                    // Supprimer les données du localStorage
+                    localStorage.removeItem('pipelineData');
+                    
+                    // Réinitialiser aux données par défaut
+                    location.reload(); // Recharger la page pour revenir aux données par défaut
+                }
+            }
+        }
+        
+        // Sauvegarder automatiquement à chaque modification importante
+        function autoSaveIfNeeded() {
+            const autoSaveEnabled = document.getElementById('autoSave')?.value !== 'false';
+            if (autoSaveEnabled) {
+                // Sauvegarder avec un petit délai pour éviter trop de sauvegardes
+                setTimeout(saveData, 1000);
+            }
+        }
+    </script>
+</body>
+</html>
